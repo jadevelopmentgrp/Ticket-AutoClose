@@ -19,6 +19,7 @@ INNER JOIN
 	ticket_last_message tlm
 		ON t.guild_id = tlm.guild_id AND t.id = tlm.ticket_id
 WHERE
+	t.open AND
 	ac.enabled AND
 	(
 		ac.since_open_with_no_response > INTERVAL '0 seconds'
