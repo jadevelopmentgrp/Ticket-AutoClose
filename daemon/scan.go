@@ -45,7 +45,7 @@ WHERE
 
 	for rows.Next() {
 		var ticket autoclose.Ticket
-		if err = rows.Scan(&ticket.GuildId, &ticket.TicketId); err != nil {
+		if err = rows.Scan(&ticket.TicketId, &ticket.GuildId); err != nil {
 			return
 		}
 
