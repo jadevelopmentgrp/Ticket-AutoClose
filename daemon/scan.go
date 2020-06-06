@@ -21,6 +21,8 @@ INNER JOIN
 WHERE
 	ac.enabled AND
 	(
+		ac.since_open_with_no_response > INTERVAL '0 seconds'
+		AND
 		NOT EXISTS (
 			SELECT
 			FROM 
@@ -28,10 +30,16 @@ WHERE
 			WHERE
 				tlm.guild_id = t.guild_id AND 
 					tlm.ticket_id = t.id
-		) AND
+		)
+		AND
 		NOW() - t.open_time > ac.since_open_with_no_response
-	) OR
-	NOW() - tlm.last_message_time > ac.since_last_message
+	)
+	OR
+	(
+		ac.since_last_message > INTERVAL '0 seconds'
+		AND
+		NOW() - tlm.last_message_time > ac.since_last_message
+	)
 ;
 `
 
