@@ -18,9 +18,9 @@ LEFT OUTER JOIN ticket_last_message tlm
     ON t.guild_id = tlm.guild_id AND t.id = tlm.ticket_id
 WHERE
     ac.enabled 
-	AND
-	t.open
-	AND
+    AND
+    t.open
+    AND
     (
 		(
 			tlm.ticket_id IS null
