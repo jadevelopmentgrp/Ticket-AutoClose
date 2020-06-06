@@ -8,38 +8,29 @@ import (
 func (d *Daemon) scan() (tickets []autoclose.Ticket, err error) {
 	query := `
 SELECT
-	t.guild_id,
-	t.id
+    t.id,
+	t.guild_id
 FROM
-	tickets t
-INNER JOIN
-	auto_close ac
-		ON t.guild_id = ac.guild_id
-INNER JOIN
-	ticket_last_message tlm
-		ON t.guild_id = tlm.guild_id AND t.id = tlm.ticket_id
+    tickets t
+INNER JOIN auto_close ac
+    ON t.guild_id = ac.guild_id
+LEFT OUTER JOIN ticket_last_message tlm
+    ON t.guild_id = tlm.guild_id AND t.id = tlm.ticket_id
 WHERE
-	t.open AND
-	ac.enabled AND
-	(
-		ac.since_open_with_no_response > INTERVAL '0 seconds'
-		AND
-		NOT EXISTS (
-			SELECT
-			FROM 
-				ticket_last_message tlm
-			WHERE
-				tlm.guild_id = t.guild_id AND 
-					tlm.ticket_id = t.id
+    ac.enabled 
+	AND
+	t.open
+	AND
+    (
+		(
+			tlm.ticket_id IS null
+			AND
+			(NOW() - t.open_time) >= ac.since_open_with_no_response
 		)
-		AND
-		NOW() - t.open_time > ac.since_open_with_no_response
-	)
-	OR
-	(
-		ac.since_last_message > INTERVAL '0 seconds'
-		AND
-		NOW() - tlm.last_message_time > ac.since_last_message
+		OR
+     	(
+			(NOW() - tlm.last_message_time) >= ac.since_last_message
+		)
 	)
 ;
 `
