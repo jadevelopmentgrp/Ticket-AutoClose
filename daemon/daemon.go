@@ -36,7 +36,9 @@ func (d *Daemon) doSweep() {
 		return
 	}
 
-	if err := autoclose.PublishMessage(d.redis, tickets); err != nil {
-		sentry.Error(err)
+	if len(tickets) > 0 {
+		if err := autoclose.PublishMessage(d.redis, tickets); err != nil {
+			sentry.Error(err)
+		}
 	}
 }
