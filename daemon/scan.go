@@ -35,7 +35,7 @@ WHERE
 		)
 	)
 	AND
-	exclude.guild_id IS NOT NULL
+	exclude.guild_id IS NULL
 ;
 `
 
