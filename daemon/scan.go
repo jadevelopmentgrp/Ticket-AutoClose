@@ -16,6 +16,8 @@ INNER JOIN auto_close ac
     ON t.guild_id = ac.guild_id
 LEFT OUTER JOIN ticket_last_message tlm
     ON t.guild_id = tlm.guild_id AND t.id = tlm.ticket_id
+LEFT JOIN auto_close_exclude exclude
+	ON t.guild_id = exclude.guild_id and t.id = exclude.ticket_id
 WHERE
     ac.enabled 
     AND
@@ -32,6 +34,8 @@ WHERE
 			(NOW() - tlm.last_message_time) >= ac.since_last_message
 		)
 	)
+	AND
+	exclude.guild_id IS NOT NULL
 ;
 `
 
