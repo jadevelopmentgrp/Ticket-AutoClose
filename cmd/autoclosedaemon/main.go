@@ -3,43 +3,38 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/TicketsBot/autoclosedaemon/config"
 	"github.com/TicketsBot/autoclosedaemon/daemon"
+	"github.com/TicketsBot/common/premium"
 	"github.com/TicketsBot/common/sentry"
 	"github.com/TicketsBot/database"
 	"github.com/go-redis/redis"
 	"github.com/jackc/pgx/v4/pgxpool"
-	"os"
-	"strconv"
+	"github.com/rxdn/gdl/cache"
 	"time"
 )
 
 func main() {
+	conf := config.ParseConfig()
+
 	if err := sentry.Initialise(sentry.Options{
-		Dsn:     os.Getenv("SENTRY_DSN"),
+		Dsn:     conf.SentryDSN,
 		Project: "autoclosedaemon",
 	}); err != nil {
 		fmt.Println(err.Error())
 	}
 
-	sweepTime, err := strconv.Atoi(os.Getenv("SWEEP_TIME"))
-	if err != nil {
-		sentry.Error(err)
-		panic(err)
-	}
+	dbClient := newDatabaseClient(conf)
+	redisClient := newRedisClient(conf)
+	cacheClient := newCacheClient(conf)
+	premiumClient := newPremiumClient(conf, redisClient, cacheClient, dbClient)
 
-	daemon := daemon.NewDaemon(newDatabaseClient(), newRedisClient(), time.Minute * time.Duration(sweepTime))
+	daemon := daemon.NewDaemon(dbClient, redisClient, premiumClient, time.Minute*time.Duration(conf.DaemonSweepTime))
 	daemon.Start()
 }
 
-func newDatabaseClient() *database.Database {
-	connString := fmt.Sprintf(
-		"postgres://%s:%s@%s/%s?pool_max_conns=%S",
-		os.Getenv("DATABASE_USER"),
-		os.Getenv("DATABASE_PASSWORD"),
-		os.Getenv("DATABASE_HOST"),
-		os.Getenv("DATABASE_NAME"),
-		os.Getenv("DATABASE_THREADS"),
-	)
+func newDatabaseClient(conf config.Config) *database.Database {
+	connString := fmt.Sprintf("%s?pool_max_conns=%d", conf.DatabaseUri, conf.DatabaseThreads)
 
 	pool, err := pgxpool.Connect(context.Background(), connString)
 	if err != nil {
@@ -50,18 +45,34 @@ func newDatabaseClient() *database.Database {
 	return database.NewDatabase(pool)
 }
 
-func newRedisClient() (client *redis.Client) {
-	threads, err := strconv.Atoi(os.Getenv("REDIS_THREADS"))
+func newCacheClient(conf config.Config) *cache.PgCache {
+	connString := fmt.Sprintf("%s?pool_max_conns=%d", conf.CacheUri, conf.CacheThreads)
+
+	pool, err := pgxpool.Connect(context.Background(), connString)
 	if err != nil {
+		sentry.Error(err)
 		panic(err)
 	}
 
+	opts := cache.CacheOptions{
+		Guilds:      true,
+		Users:       true,
+		Members:     true,
+		Channels:    true,
+		Roles:       true,
+	}
+
+	client := cache.NewPgCache(pool, opts)
+	return &client
+}
+
+func newRedisClient(conf config.Config) (client *redis.Client) {
 	options := &redis.Options{
 		Network:      "tcp",
-		Addr:         os.Getenv("REDIS_ADDR"),
-		Password:     os.Getenv("REDIS_PASSWD"),
-		PoolSize:     threads,
-		MinIdleConns: threads,
+		Addr:         conf.RedisAddress,
+		Password:     conf.RedisPassword,
+		PoolSize:     conf.RedisThreads,
+		MinIdleConns: conf.RedisThreads,
 	}
 
 	client = redis.NewClient(options)
@@ -71,4 +82,9 @@ func newRedisClient() (client *redis.Client) {
 	}
 
 	return
+}
+
+func newPremiumClient(conf config.Config, redisClient *redis.Client, cacheClient *cache.PgCache, databaseClient *database.Database) *premium.PremiumLookupClient {
+	patreonClient := premium.NewPatreonClient(conf.PatreonProxyUrl, conf.PatreonProxyKey)
+	return premium.NewPremiumLookupClient(patreonClient, redisClient, cacheClient, databaseClient)
 }
