@@ -20,6 +20,7 @@ func main() {
 	if err := sentry.Initialise(sentry.Options{
 		Dsn:     conf.SentryDSN,
 		Project: "autoclosedaemon",
+		Debug:   conf.SentryDSN == "",
 	}); err != nil {
 		fmt.Println(err.Error())
 	}
@@ -29,7 +30,7 @@ func main() {
 	cacheClient := newCacheClient(conf)
 	premiumClient := newPremiumClient(conf, redisClient, cacheClient, dbClient)
 
-	daemon := daemon.NewDaemon(dbClient, redisClient, premiumClient, time.Minute*time.Duration(conf.DaemonSweepTime))
+	daemon := daemon.NewDaemon(conf, dbClient, redisClient, premiumClient, time.Minute*time.Duration(conf.DaemonSweepTime))
 	daemon.Start()
 }
 
@@ -55,11 +56,11 @@ func newCacheClient(conf config.Config) *cache.PgCache {
 	}
 
 	opts := cache.CacheOptions{
-		Guilds:      true,
-		Users:       true,
-		Members:     true,
-		Channels:    true,
-		Roles:       true,
+		Guilds:   true,
+		Users:    true,
+		Members:  true,
+		Channels: true,
+		Roles:    true,
 	}
 
 	client := cache.NewPgCache(pool, opts)

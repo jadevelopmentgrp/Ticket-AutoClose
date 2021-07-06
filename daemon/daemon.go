@@ -8,6 +8,8 @@ import (
 	"github.com/TicketsBot/database"
 	"github.com/go-redis/redis"
 	"github.com/rxdn/gdl/rest/ratelimit"
+	"log"
+	"os"
 	"time"
 )
 
@@ -18,6 +20,7 @@ type Daemon struct {
 	premiumClient *premium.PremiumLookupClient
 	Queue         *Queue
 	sweepTime     time.Duration
+	Logger        *log.Logger
 }
 
 func NewDaemon(conf config.Config, db *database.Database, redis *redis.Client, premiumClient *premium.PremiumLookupClient, sweepTime time.Duration) *Daemon {
@@ -27,6 +30,7 @@ func NewDaemon(conf config.Config, db *database.Database, redis *redis.Client, p
 		redis:         redis,
 		premiumClient: premiumClient,
 		sweepTime:     sweepTime,
+		Logger: log.New(os.Stdout, "[daemon] ", 0),
 	}
 
 	daemon.Queue = NewQueue(daemon, time.Second*1)
@@ -43,6 +47,7 @@ func (d *Daemon) Start() {
 }
 
 func (d *Daemon) DoSweep() {
+	d.Logger.Println("starting sweep")
 	tickets, err := d.scan()
 	if err != nil {
 		sentry.Error(err)
@@ -61,12 +66,15 @@ func (d *Daemon) DoSweep() {
 			continue
 		}
 
+		// TODO: Need isPremium to return error, so that we can purge settings
 		if isPremium {
+			d.Logger.Printf("Closing %d ticket #%d\n", ticket.GuildId, ticket.TicketId)
 			d.Queue.Push(ticket)
 		}
 	}
 
 	premiumCache = make(map[uint64]bool)
+	d.Logger.Println("done")
 }
 
 func (d *Daemon) isPremium(guildId uint64) (bool, error) {
