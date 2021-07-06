@@ -24,6 +24,8 @@ WHERE
     ac.enabled 
     AND
     t.open
+	AND
+	t.channel_id IS NOT NULL
     AND
     (
 		(
