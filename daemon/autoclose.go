@@ -8,7 +8,7 @@ import (
 )
 
 func (d *Daemon) SweepAutoClose() {
-	d.Logger.Println("starting sweep")
+	d.Logger.Println("starting autoclose sweep")
 	tickets, err := d.scan()
 	if err != nil {
 		sentry.Error(err)

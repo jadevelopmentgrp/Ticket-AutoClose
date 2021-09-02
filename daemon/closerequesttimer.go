@@ -5,6 +5,8 @@ import (
 )
 
 func (d *Daemon) SweepCloseRequestTimer()  {
+	d.Logger.Println("starting close request sweep")
+
 	if err := d.db.CloseRequest.Cleanup(); err != nil {
 		sentry.Error(err)
 		return
