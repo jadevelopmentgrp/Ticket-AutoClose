@@ -18,6 +18,8 @@ func (d *Daemon) SweepCloseRequestTimer()  {
 		return
 	}
 
+	d.Logger.Printf("closing %d tickets\n", len(requests))
+
 	for _, request := range requests {
 		d.CloseRequestQueue.Push(request)
 	}

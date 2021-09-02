@@ -45,6 +45,8 @@ func (d *Daemon) Start() {
 	for {
 		d.SweepAutoClose()
 		d.SweepCloseRequestTimer()
+		d.Logger.Println("done")
+
 		time.Sleep(d.sweepTime)
 	}
 }

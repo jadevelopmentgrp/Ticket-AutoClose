@@ -20,6 +20,8 @@ func (d *Daemon) SweepAutoClose() {
 		sentry.Error(err)
 	}
 
+	d.Logger.Printf("closing %d tickets\n", len(tickets))
+
 	for _, ticket := range tickets {
 		isPremium, err := d.isPremium(ticket.GuildId)
 		if err != nil {
@@ -35,7 +37,6 @@ func (d *Daemon) SweepAutoClose() {
 	}
 
 	premiumCache = make(map[uint64]bool)
-	d.Logger.Println("done")
 }
 
 func (d *Daemon) isPremium(guildId uint64) (bool, error) {
