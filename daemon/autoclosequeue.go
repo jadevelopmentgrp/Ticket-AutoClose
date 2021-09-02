@@ -6,25 +6,25 @@ import (
 	"time"
 )
 
-type Queue struct {
+type AutoCloseQueue struct {
 	daemon    *Daemon
 	ratelimit time.Duration
 	ch        chan autoclose.Ticket
 }
 
-func NewQueue(daemon *Daemon, ratelimit time.Duration) *Queue {
-	return &Queue{
+func NewAutoCloseQueue(daemon *Daemon, ratelimit time.Duration) *AutoCloseQueue {
+	return &AutoCloseQueue{
 		daemon:    daemon,
 		ratelimit: ratelimit,
 		ch:        make(chan autoclose.Ticket),
 	}
 }
 
-func (q *Queue) Push(el autoclose.Ticket) {
+func (q *AutoCloseQueue) Push(el autoclose.Ticket) {
 	q.ch <- el
 }
 
-func (q *Queue) Listen() {
+func (q *AutoCloseQueue) Listen() {
 	for el := range q.ch {
 		if err := autoclose.PublishMessage(q.daemon.redis, []autoclose.Ticket{el}); err != nil {
 			sentry.Error(err)
