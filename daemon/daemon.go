@@ -3,7 +3,7 @@ package daemon
 import (
 	"github.com/TicketsBot/autoclosedaemon/config"
 	"github.com/TicketsBot/common/premium"
-	"github.com/TicketsBot/database"
+	. "github.com/TicketsBot/database"
 	"github.com/go-redis/redis"
 	"log"
 	"os"
@@ -12,7 +12,7 @@ import (
 
 type Daemon struct {
 	conf              config.Config
-	db                *database.Database
+	db                *Database
 	redis             *redis.Client
 	premiumClient     *premium.PremiumLookupClient
 	AutoCloseQueue    *AutoCloseQueue
@@ -22,7 +22,7 @@ type Daemon struct {
 	Logger    *log.Logger
 }
 
-func NewDaemon(conf config.Config, db *database.Database, redis *redis.Client, premiumClient *premium.PremiumLookupClient, sweepTime time.Duration) *Daemon {
+func NewDaemon(conf config.Config, db *Database, redis *redis.Client, premiumClient *premium.PremiumLookupClient, sweepTime time.Duration) *Daemon {
 	daemon := &Daemon{
 		conf:          conf,
 		db:            db,

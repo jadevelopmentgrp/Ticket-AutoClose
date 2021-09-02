@@ -1,7 +1,6 @@
 package daemon
 
 import (
-	"fmt"
 	"github.com/TicketsBot/common/sentry"
 )
 
