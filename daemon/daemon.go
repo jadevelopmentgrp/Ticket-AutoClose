@@ -45,6 +45,7 @@ func (d *Daemon) Start() {
 	for {
 		// 5 day lenience
 		if time.Now().Day() <= 5 {
+			d.Logger.Printf("skipping: day %d\n", time.Now().Day())
 			continue
 		}
 
