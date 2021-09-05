@@ -43,13 +43,6 @@ func (d *Daemon) Start() {
 	go d.CloseRequestQueue.Listen()
 
 	for {
-		// 5 day lenience
-		if time.Now().Day() <= 5 {
-			d.Logger.Printf("skipping: day %d\n", time.Now().Day())
-			time.Sleep(d.sweepTime)
-			continue
-		}
-
 		d.SweepAutoClose()
 		d.SweepCloseRequestTimer()
 		d.Logger.Println("done")
