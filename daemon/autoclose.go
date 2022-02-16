@@ -5,6 +5,7 @@ import (
 	"github.com/TicketsBot/common/premium"
 	"github.com/TicketsBot/common/sentry"
 	"github.com/rxdn/gdl/rest/ratelimit"
+	"time"
 )
 
 func (d *Daemon) SweepAutoClose() {
@@ -30,8 +31,18 @@ func (d *Daemon) SweepAutoClose() {
 		}
 
 		// TODO: Need isPremium to return error, so that we can purge settings
+		// TODO: autoclose exclude if not premium?
 		if isPremium {
-			d.Logger.Printf("Closing %d ticket #%d\n", ticket.GuildId, ticket.TicketId)
+			// Convert message ID to timestamp for debug logging
+			if ticket.LastMessageId == nil {
+				d.Logger.Printf("Closing %d ticket #%d (no messages)\n", ticket.GuildId, ticket.TicketId)
+			} else {
+				shifted := *ticket.LastMessageId >> 22
+				lastMessageTime := time.UnixMilli(int64(shifted + 1420070400000))
+
+				d.Logger.Printf("Closing %d ticket #%d (last message time: %s)\n", ticket.GuildId, ticket.TicketId, lastMessageTime.String())
+			}
+
 			d.AutoCloseQueue.Push(ticket)
 		}
 	}

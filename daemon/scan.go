@@ -11,7 +11,8 @@ func (d *Daemon) scan() (tickets []autoclose.Ticket, err error) {
 	query := `
 SELECT
     t.id,
-	t.guild_id
+	t.guild_id,
+    tlm.last_message_id
 FROM
     tickets t
 INNER JOIN auto_close ac
@@ -53,7 +54,7 @@ WHERE
 
 	for rows.Next() {
 		var ticket autoclose.Ticket
-		if err = rows.Scan(&ticket.TicketId, &ticket.GuildId); err != nil {
+		if err = rows.Scan(&ticket.TicketId, &ticket.GuildId, &ticket.LastMessageId); err != nil {
 			return
 		}
 
