@@ -171,6 +171,8 @@ github.com/rs/zerolog v1.15.0/go.mod h1:xYTKnLHcpfU2225ny5qZjxnj9NvkumZYjJHlAThC
 github.com/rxdn/gdl v0.0.0-20210527173953-25dde613ff0a/go.mod h1:jvcb1N6AdaGx3/e8MoLedO6qSo/+UdA5GGHOA8cnAeU=
 github.com/rxdn/gdl v0.0.0-20210701115435-816eb486d5d0 h1:/IrknetZH8jHXUJaSQZp4KwWBmjtAGuzQPg4A1JIGnw=
 github.com/rxdn/gdl v0.0.0-20210701115435-816eb486d5d0/go.mod h1:jvcb1N6AdaGx3/e8MoLedO6qSo/+UdA5GGHOA8cnAeU=
+github.com/rxdn/gdl v0.0.0-20220209151849-19fd8c86af50 h1:xkWpJfblzNEzt/wQ0OB/vqJdLBnSCYIcuVE6z396MWY=
+github.com/rxdn/gdl v0.0.0-20220209151849-19fd8c86af50/go.mod h1:rENs8TxMsoYSJRssegNS/+fy18NCI9EUdCJX8R83PlY=
 github.com/satori/go.uuid v1.2.0/go.mod h1:dA0hQrYB0VpLJoorglMZABFdXlWrHn1NEOzdhQKdks0=
 github.com/shopspring/decimal v0.0.0-20180709203117-cd690d0c9e24 h1:pntxY8Ary0t43dCZ5dqY4YTJCObLY1kIXl0uzMv+7DE=
 github.com/shopspring/decimal v0.0.0-20180709203117-cd690d0c9e24/go.mod h1:M+9NzErvs504Cn4c5DxATwIqPbtswREoFCre64PpcG4=

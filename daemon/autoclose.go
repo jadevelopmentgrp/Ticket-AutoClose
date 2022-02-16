@@ -1,6 +1,7 @@
 package daemon
 
 import (
+	"context"
 	"fmt"
 	"github.com/TicketsBot/common/premium"
 	"github.com/TicketsBot/common/sentry"
@@ -17,7 +18,7 @@ func (d *Daemon) SweepAutoClose() {
 	}
 
 	// make sure we don't get a huge backlog due to a worker outage
-	if err := d.redis.Del("tickets:autoclose").Err(); err != nil {
+	if err := d.redis.Del(context.Background(), "tickets:autoclose").Err(); err != nil {
 		sentry.Error(err)
 	}
 

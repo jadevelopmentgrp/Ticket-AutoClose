@@ -8,7 +8,7 @@ import (
 	"github.com/TicketsBot/common/premium"
 	"github.com/TicketsBot/common/sentry"
 	"github.com/TicketsBot/database"
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/rxdn/gdl/cache"
 	"time"
@@ -77,7 +77,7 @@ func newRedisClient(conf config.Config) (client *redis.Client) {
 	}
 
 	client = redis.NewClient(options)
-	if err := client.Ping().Err(); err != nil {
+	if err := client.Ping(context.Background()).Err(); err != nil {
 		sentry.Error(err)
 		panic(err)
 	}

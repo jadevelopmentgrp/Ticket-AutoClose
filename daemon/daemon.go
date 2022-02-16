@@ -4,7 +4,7 @@ import (
 	"github.com/TicketsBot/autoclosedaemon/config"
 	"github.com/TicketsBot/common/premium"
 	"github.com/TicketsBot/database"
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 	"log"
 	"os"
 	"time"
