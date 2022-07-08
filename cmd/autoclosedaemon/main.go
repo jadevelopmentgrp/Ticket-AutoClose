@@ -47,9 +47,15 @@ func newDatabaseClient(conf config.Config) *database.Database {
 }
 
 func newCacheClient(conf config.Config) *cache.PgCache {
-	connString := fmt.Sprintf("%s?pool_max_conns=%d", conf.CacheUri, conf.CacheThreads)
+	connString := fmt.Sprintf("%s?pool_max_conns=%d&statement_cache_mode=describe", conf.CacheUri, conf.CacheThreads)
 
-	pool, err := pgxpool.Connect(context.Background(), connString)
+	cfg, err := pgxpool.ParseConfig(connString)
+	if err != nil {
+		sentry.Error(err)
+		panic(err)
+	}
+
+	pool, err := pgxpool.ConnectConfig(context.Background(), cfg)
 	if err != nil {
 		sentry.Error(err)
 		panic(err)
