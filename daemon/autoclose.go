@@ -31,8 +31,6 @@ func (d *Daemon) SweepAutoClose() {
 			continue
 		}
 
-		// TODO: Need isPremium to return error, so that we can purge settings
-		// TODO: autoclose exclude if not premium?
 		if isPremium {
 			// Convert message ID to timestamp for debug logging
 			if ticket.LastMessageId == nil {
@@ -45,6 +43,13 @@ func (d *Daemon) SweepAutoClose() {
 			}
 
 			d.AutoCloseQueue.Push(ticket)
+		} else {
+			d.Logger.Printf("Guild %d (ticket %d) does not have premium, so resetting autoclose settings", ticket.GuildId, ticket.TicketId)
+
+			if err := d.db.AutoClose.Reset(ticket.GuildId); err != nil {
+				sentry.Error(err)
+				continue
+			}
 		}
 	}
 

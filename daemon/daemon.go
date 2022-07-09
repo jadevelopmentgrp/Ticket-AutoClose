@@ -2,6 +2,7 @@ package daemon
 
 import (
 	"github.com/TicketsBot/autoclosedaemon/config"
+	"github.com/TicketsBot/common/autoclose"
 	"github.com/TicketsBot/common/premium"
 	"github.com/TicketsBot/database"
 	"github.com/go-redis/redis/v8"
@@ -15,8 +16,8 @@ type Daemon struct {
 	db                *database.Database
 	redis             *redis.Client
 	premiumClient     *premium.PremiumLookupClient
-	AutoCloseQueue    *AutoCloseQueue
-	CloseRequestQueue *CloseRequestQueue
+	AutoCloseQueue    *Queue[autoclose.Ticket]
+	CloseRequestQueue *Queue[database.CloseRequest]
 
 	sweepTime time.Duration
 	Logger    *log.Logger
