@@ -15,6 +15,7 @@ type Config struct {
 	PatreonProxyUrl string `env:"PATREON_PROXY_URL"`
 	PatreonProxyKey string `env:"PATREON_PROXY_KEY"`
 	BotToken        string `env:"BOT_TOKEN"`
+	ProductionMode  bool   `env:"PRODUCTION_MODE" envDefault:"false"`
 }
 
 func ParseConfig() (conf Config) {

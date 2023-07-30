@@ -6,13 +6,13 @@ import (
 	"github.com/TicketsBot/common/premium"
 	"github.com/TicketsBot/database"
 	"github.com/go-redis/redis/v8"
-	"log"
-	"os"
+	"go.uber.org/zap"
 	"time"
 )
 
 type Daemon struct {
 	conf              config.Config
+	logger            *zap.Logger
 	db                *database.Database
 	redis             *redis.Client
 	premiumClient     *premium.PremiumLookupClient
@@ -20,17 +20,23 @@ type Daemon struct {
 	CloseRequestQueue *Queue[database.CloseRequest]
 
 	sweepTime time.Duration
-	Logger    *log.Logger
 }
 
-func NewDaemon(conf config.Config, db *database.Database, redis *redis.Client, premiumClient *premium.PremiumLookupClient, sweepTime time.Duration) *Daemon {
+func NewDaemon(
+	conf config.Config,
+	logger *zap.Logger,
+	db *database.Database,
+	redis *redis.Client,
+	premiumClient *premium.PremiumLookupClient,
+	sweepTime time.Duration,
+) *Daemon {
 	daemon := &Daemon{
 		conf:          conf,
+		logger:        logger,
 		db:            db,
 		redis:         redis,
 		premiumClient: premiumClient,
 		sweepTime:     sweepTime,
-		Logger:        log.New(os.Stdout, "[daemon] ", 0),
 	}
 
 	daemon.AutoCloseQueue = NewAutoCloseQueue(daemon, time.Second*1)
@@ -44,9 +50,10 @@ func (d *Daemon) Start() {
 	go d.CloseRequestQueue.Listen()
 
 	for {
+		d.logger.Debug("Starting run")
 		d.SweepAutoClose()
 		d.SweepCloseRequestTimer()
-		d.Logger.Println("done")
+		d.logger.Debug("Finished run")
 
 		time.Sleep(d.sweepTime)
 	}

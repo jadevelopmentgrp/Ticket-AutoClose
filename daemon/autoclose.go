@@ -4,51 +4,78 @@ import (
 	"context"
 	"fmt"
 	"github.com/TicketsBot/common/premium"
-	"github.com/TicketsBot/common/sentry"
 	"github.com/rxdn/gdl/rest/ratelimit"
+	"go.uber.org/zap"
 	"time"
 )
 
+var premiumCache = make(map[uint64]bool)
+
 func (d *Daemon) SweepAutoClose() {
-	d.Logger.Println("starting autoclose sweep")
+	d.logger.Debug("Starting autoclose sweep")
 	tickets, err := d.scan()
 	if err != nil {
-		sentry.Error(err)
+		d.logger.Error("Error querying database for tickets to close (autoclose)", zap.Error(err))
 		return
 	}
 
 	// make sure we don't get a huge backlog due to a worker outage
 	if err := d.redis.Del(context.Background(), "tickets:autoclose").Err(); err != nil {
-		sentry.Error(err)
+		d.logger.Error("Error clearing autoclose Redis queue", zap.Error(err))
+		return
 	}
 
-	d.Logger.Printf("closing %d tickets\n", len(tickets))
+	d.logger.Debug("Closing tickets (autoclose)", zap.Int("count", len(tickets)))
 
 	for _, ticket := range tickets {
 		isPremium, err := d.isPremium(ticket.GuildId)
 		if err != nil {
-			sentry.Error(err)
-			continue
+			d.logger.Error(
+				"Error getting premium status",
+				zap.Error(err),
+				zap.Uint64("guild", ticket.GuildId),
+				zap.Int("ticket", ticket.TicketId),
+			)
+
+			return // Likely that the rest will fail as well
 		}
 
 		if isPremium {
 			// Convert message ID to timestamp for debug logging
 			if ticket.LastMessageId == nil {
-				d.Logger.Printf("Closing %d ticket #%d (no messages)\n", ticket.GuildId, ticket.TicketId)
+				d.logger.Info(
+					"Queueing ticket close (no messages)",
+					zap.Uint64("guild", ticket.GuildId),
+					zap.Int("ticket", ticket.TicketId),
+				)
 			} else {
 				shifted := *ticket.LastMessageId >> 22
 				lastMessageTime := time.UnixMilli(int64(shifted + 1420070400000))
 
-				d.Logger.Printf("Closing %d ticket #%d (last message time: %s)\n", ticket.GuildId, ticket.TicketId, lastMessageTime.String())
+				d.logger.Info(
+					"Queueing ticket close (timeout elapsed)",
+					zap.Uint64("guild", ticket.GuildId),
+					zap.Int("ticket", ticket.TicketId),
+					zap.Time("last_message", lastMessageTime),
+				)
 			}
 
 			d.AutoCloseQueue.Push(ticket)
 		} else {
-			d.Logger.Printf("Guild %d (ticket %d) does not have premium, so resetting autoclose settings", ticket.GuildId, ticket.TicketId)
+			d.logger.Info(
+				"Guild does not have premium, so resetting autoclose settings",
+				zap.Uint64("guild", ticket.GuildId),
+				zap.Int("ticket", ticket.TicketId),
+			)
 
 			if err := d.db.AutoClose.Reset(ticket.GuildId); err != nil {
-				sentry.Error(err)
-				continue
+				d.logger.Error(
+					"Error resetting autoclose settings",
+					zap.Error(err),
+					zap.Uint64("guild", ticket.GuildId),
+					zap.Int("ticket", ticket.TicketId),
+				)
+				return // Database error, likely to fail again
 			}
 		}
 	}
@@ -82,7 +109,6 @@ func (d *Daemon) isPremium(guildId uint64) (bool, error) {
 			keyPrefix = "ratelimiter:public"
 		}
 
-		// TODO: Large sharding buckets
 		ratelimiter := ratelimit.NewRateLimiter(ratelimit.NewRedisStore(d.redis, keyPrefix), 1)
 		premiumTier, err := d.premiumClient.GetTierByGuildId(guildId, true, token, ratelimiter)
 		if err == nil {
@@ -92,4 +118,3 @@ func (d *Daemon) isPremium(guildId uint64) (bool, error) {
 		return premiumTier > premium.None, err
 	}
 }
-

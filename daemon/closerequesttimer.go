@@ -1,26 +1,33 @@
 package daemon
 
 import (
-	"github.com/TicketsBot/common/sentry"
+	"go.uber.org/zap"
 )
 
-func (d *Daemon) SweepCloseRequestTimer()  {
-	d.Logger.Println("starting close request sweep")
+func (d *Daemon) SweepCloseRequestTimer() {
+	d.logger.Debug("Starting close request sweep")
 
 	if err := d.db.CloseRequest.Cleanup(); err != nil {
-		sentry.Error(err)
+		d.logger.Error("Error querying database for tickets to close (close requests)", zap.Error(err))
 		return
 	}
 
 	requests, err := d.db.CloseRequest.GetCloseable()
 	if err != nil {
-		sentry.Error(err)
+		d.logger.Error("Error querying database for tickets to close (close requests)", zap.Error(err))
 		return
 	}
 
-	d.Logger.Printf("closing %d tickets\n", len(requests))
+	d.logger.Debug("Queueing ticket close (close requests)", zap.Int("count", len(requests)))
 
 	for _, request := range requests {
+		d.logger.Info(
+			"Closing ticket (close request)",
+			zap.Uint64("guild", request.GuildId),
+			zap.Int("ticket", request.TicketId),
+			zap.Timep("close_at", request.CloseAt),
+		)
+
 		d.CloseRequestQueue.Push(request)
 	}
 }

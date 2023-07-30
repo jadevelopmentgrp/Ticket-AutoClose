@@ -5,8 +5,6 @@ import (
 	"github.com/TicketsBot/common/autoclose"
 )
 
-var premiumCache = make(map[uint64]bool)
-
 func (d *Daemon) scan() (tickets []autoclose.Ticket, err error) {
 	query := `
 SELECT
