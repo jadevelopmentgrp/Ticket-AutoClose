@@ -8,7 +8,7 @@ import (
 
 func NewAutoCloseQueue(daemon *Daemon, ratelimit time.Duration) *Queue[autoclose.Ticket] {
 	return NewQueue[autoclose.Ticket](daemon.logger, ratelimit, func(el autoclose.Ticket) error {
-		daemon.logger.Debug(
+		daemon.logger.Info(
 			"Publishing ticket close to workers (autoclose)",
 			zap.Uint64("guild", el.GuildId),
 			zap.Int("ticket", el.TicketId),
