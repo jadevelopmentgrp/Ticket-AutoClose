@@ -1,15 +1,17 @@
 module github.com/TicketsBot/autoclosedaemon
 
-go 1.18
+go 1.22
+
+toolchain go1.22.4
 
 require (
-	github.com/TicketsBot/common v0.0.0-20230723121853-8d873b27086e
-	github.com/TicketsBot/database v0.0.0-20220709224317-7f1d8d72ab29
+	github.com/TicketsBot/common v0.0.0-20240901165214-c95b2dd70932
+	github.com/TicketsBot/database v0.0.0-20240901155918-d0c56594a09a
 	github.com/caarlos0/env v3.5.0+incompatible
 	github.com/getsentry/sentry-go v0.21.0
 	github.com/go-redis/redis/v8 v8.11.3
 	github.com/jackc/pgx/v4 v4.6.0
-	github.com/rxdn/gdl v0.0.0-20230622203838-cad65ada73f0
+	github.com/rxdn/gdl v0.0.0-20240612163900-621eccf40179
 	go.uber.org/zap v1.24.0
 )
 
@@ -19,7 +21,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/go-errors/errors v1.4.2 // indirect
-	github.com/gofrs/uuid v3.3.0+incompatible // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.5.0 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect

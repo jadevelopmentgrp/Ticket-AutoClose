@@ -1,6 +1,7 @@
 package daemon
 
 import (
+	"context"
 	"github.com/TicketsBot/autoclosedaemon/config"
 	"github.com/TicketsBot/common/autoclose"
 	"github.com/TicketsBot/common/premium"
@@ -50,11 +51,19 @@ func (d *Daemon) Start() {
 	go d.CloseRequestQueue.Listen()
 
 	for {
-		d.logger.Debug("Starting run")
-		d.SweepAutoClose()
-		d.SweepCloseRequestTimer()
-		d.logger.Debug("Finished run")
-
-		time.Sleep(d.sweepTime)
+		select {
+		case <-time.After(d.sweepTime):
+			d.logger.Debug("Starting run")
+			d.doOne()
+			d.logger.Debug("Finished run")
+		}
 	}
+}
+
+func (d *Daemon) doOne() {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*10) // TODO: Don't hardcode
+	defer cancel()
+
+	d.SweepAutoClose(ctx)
+	d.SweepCloseRequestTimer(ctx)
 }

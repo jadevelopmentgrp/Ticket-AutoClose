@@ -12,8 +12,6 @@ type Config struct {
 	RedisThreads    int    `env:"REDIS_THREADS"`
 	SentryDSN       string `env:"SENTRY_DSN"`
 	DaemonSweepTime int    `env:"SWEEP_TIME"`
-	PatreonProxyUrl string `env:"PATREON_PROXY_URL"`
-	PatreonProxyKey string `env:"PATREON_PROXY_KEY"`
 	BotToken        string `env:"BOT_TOKEN"`
 	ProductionMode  bool   `env:"PRODUCTION_MODE" envDefault:"false"`
 }

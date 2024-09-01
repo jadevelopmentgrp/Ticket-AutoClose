@@ -2,7 +2,7 @@ name: Build and Publish
 
 env:
   REGISTRY: ghcr.io
-  PACKAGE_NAME: cleanupdaemon
+  PACKAGE_NAME: autoclosedaemon
   GITHUB_REPOSITORY: ${{ github.repository }}
   GITHUB_SHA: ${{ github.sha }}
 

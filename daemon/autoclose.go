@@ -11,7 +11,7 @@ import (
 
 var premiumCache = make(map[uint64]bool)
 
-func (d *Daemon) SweepAutoClose() {
+func (d *Daemon) SweepAutoClose(ctx context.Context) {
 	d.logger.Debug("Starting autoclose sweep")
 	tickets, err := d.scan()
 	if err != nil {
@@ -28,7 +28,7 @@ func (d *Daemon) SweepAutoClose() {
 	d.logger.Debug("Closing tickets (autoclose)", zap.Int("count", len(tickets)))
 
 	for _, ticket := range tickets {
-		isPremium, err := d.isPremium(ticket.GuildId)
+		isPremium, err := d.isPremium(ctx, ticket.GuildId)
 		if err != nil {
 			d.logger.Error(
 				"Error getting premium status",
@@ -68,7 +68,7 @@ func (d *Daemon) SweepAutoClose() {
 				zap.Int("ticket", ticket.TicketId),
 			)
 
-			if err := d.db.AutoClose.Reset(ticket.GuildId); err != nil {
+			if err := d.db.AutoClose.Reset(ctx, ticket.GuildId); err != nil {
 				d.logger.Error(
 					"Error resetting autoclose settings",
 					zap.Error(err),
@@ -83,13 +83,13 @@ func (d *Daemon) SweepAutoClose() {
 	premiumCache = make(map[uint64]bool)
 }
 
-func (d *Daemon) isPremium(guildId uint64) (bool, error) {
+func (d *Daemon) isPremium(ctx context.Context, guildId uint64) (bool, error) {
 	isPremium, ok := premiumCache[guildId]
 	if ok {
 		return isPremium, nil
 	} else { // If not cached, figure it out
 		// Find token
-		whitelabelBotId, isWhitelabel, err := d.db.WhitelabelGuilds.GetBotByGuild(guildId)
+		whitelabelBotId, isWhitelabel, err := d.db.WhitelabelGuilds.GetBotByGuild(ctx, guildId)
 		if err != nil {
 			return false, err
 		}
@@ -97,7 +97,7 @@ func (d *Daemon) isPremium(guildId uint64) (bool, error) {
 		var token, keyPrefix string
 
 		if isWhitelabel {
-			res, err := d.db.Whitelabel.GetByBotId(whitelabelBotId)
+			res, err := d.db.Whitelabel.GetByBotId(ctx, whitelabelBotId)
 			if err != nil {
 				return false, err
 			}
@@ -110,7 +110,7 @@ func (d *Daemon) isPremium(guildId uint64) (bool, error) {
 		}
 
 		ratelimiter := ratelimit.NewRateLimiter(ratelimit.NewRedisStore(d.redis, keyPrefix), 1)
-		premiumTier, err := d.premiumClient.GetTierByGuildId(guildId, true, token, ratelimiter)
+		premiumTier, err := d.premiumClient.GetTierByGuildId(ctx, guildId, true, token, ratelimiter)
 		if err == nil {
 			premiumCache[guildId] = premiumTier > premium.None
 		}

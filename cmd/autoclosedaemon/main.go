@@ -59,7 +59,7 @@ func main() {
 	logger.Debug("Connected to redis, connecting to cache...")
 	cacheClient := newCacheClient(conf)
 	logger.Debug("Connected to cache, building premium client...")
-	premiumClient := newPremiumClient(conf, redisClient, cacheClient, dbClient)
+	premiumClient := newPremiumClient(redisClient, cacheClient, dbClient)
 
 	logger.Debug("Starting daemon", zap.Int("sweep_time_minutes", conf.DaemonSweepTime))
 	daemon.NewDaemon(
@@ -125,7 +125,6 @@ func newRedisClient(conf config.Config) (client *redis.Client) {
 	return
 }
 
-func newPremiumClient(conf config.Config, redisClient *redis.Client, cacheClient *cache.PgCache, databaseClient *database.Database) *premium.PremiumLookupClient {
-	patreonClient := premium.NewPatreonClient(conf.PatreonProxyUrl, conf.PatreonProxyKey)
-	return premium.NewPremiumLookupClient(patreonClient, redisClient, cacheClient, databaseClient)
+func newPremiumClient(redisClient *redis.Client, cacheClient *cache.PgCache, databaseClient *database.Database) *premium.PremiumLookupClient {
+	return premium.NewPremiumLookupClient(redisClient, cacheClient, databaseClient)
 }
