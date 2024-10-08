@@ -2,14 +2,20 @@ package daemon
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"github.com/TicketsBot/common/collections"
 	"github.com/TicketsBot/common/premium"
 	"github.com/rxdn/gdl/rest/ratelimit"
+	"github.com/rxdn/gdl/rest/request"
 	"go.uber.org/zap"
 	"time"
 )
 
-var premiumCache = make(map[uint64]bool)
+var (
+	premiumCache  = make(map[uint64]bool)
+	botNotInGuild = collections.NewSet[uint64]()
+)
 
 func (d *Daemon) SweepAutoClose(ctx context.Context) {
 	d.logger.Debug("Starting autoclose sweep")
@@ -28,16 +34,47 @@ func (d *Daemon) SweepAutoClose(ctx context.Context) {
 	d.logger.Debug("Closing tickets (autoclose)", zap.Int("count", len(tickets)))
 
 	for _, ticket := range tickets {
+		if notInGuild := botNotInGuild.Contains(ticket.GuildId); notInGuild {
+			if err := d.db.AutoCloseExclude.Exclude(ctx, ticket.GuildId, ticket.TicketId); err != nil {
+				d.logger.Error(
+					"Error excluding ticket from autoclose",
+					zap.Error(err),
+					zap.Uint64("guild", ticket.GuildId),
+					zap.Int("ticket", ticket.TicketId),
+				)
+			}
+
+			continue
+		}
+
 		isPremium, err := d.isPremium(ctx, ticket.GuildId)
 		if err != nil {
-			d.logger.Error(
-				"Error getting premium status",
-				zap.Error(err),
-				zap.Uint64("guild", ticket.GuildId),
-				zap.Int("ticket", ticket.TicketId),
-			)
+			var restError request.RestError
+			if errors.As(err, &restError) && restError.StatusCode == 404 {
+				// Bot is not in guild
+				d.logger.Info("Bot is not in guild, excluding tickets from autoclose", zap.Uint64("guild", ticket.GuildId))
+				botNotInGuild.Add(ticket.GuildId)
 
-			return // Likely that the rest will fail as well
+				if err := d.db.AutoCloseExclude.Exclude(ctx, ticket.GuildId, ticket.TicketId); err != nil {
+					d.logger.Error(
+						"Error excluding ticket from autoclose",
+						zap.Error(err),
+						zap.Uint64("guild", ticket.GuildId),
+						zap.Int("ticket", ticket.TicketId),
+					)
+				}
+
+				continue
+			} else {
+				d.logger.Error(
+					"Error getting premium status",
+					zap.Error(err),
+					zap.Uint64("guild", ticket.GuildId),
+					zap.Int("ticket", ticket.TicketId),
+				)
+
+				return // Likely that the rest will fail as well
+			}
 		}
 
 		if isPremium {
@@ -81,6 +118,7 @@ func (d *Daemon) SweepAutoClose(ctx context.Context) {
 	}
 
 	premiumCache = make(map[uint64]bool)
+	botNotInGuild = collections.NewSet[uint64]()
 }
 
 func (d *Daemon) isPremium(ctx context.Context, guildId uint64) (bool, error) {
