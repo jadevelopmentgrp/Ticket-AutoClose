@@ -2,7 +2,7 @@ name: Build and Publish
 
 env:
   REGISTRY: ghcr.io
-  PACKAGE_NAME: ticket-autoclose
+  PACKAGE_NAME: tickets-autoclose
   GITHUB_REPOSITORY: ${{ github.repository }}
   GITHUB_SHA: ${{ github.sha }}
 
