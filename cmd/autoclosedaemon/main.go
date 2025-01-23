@@ -3,37 +3,20 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/TicketsBot/autoclosedaemon/config"
-	"github.com/TicketsBot/autoclosedaemon/daemon"
-	"github.com/TicketsBot/common/observability"
-	"github.com/TicketsBot/common/premium"
-	"github.com/TicketsBot/common/sentry"
-	"github.com/TicketsBot/database"
-	sentry_go "github.com/getsentry/sentry-go"
+	"time"
+
 	"github.com/go-redis/redis/v8"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jadevelopmentgrp/Tickets-AutoClose/config"
+	"github.com/jadevelopmentgrp/Tickets-AutoClose/daemon"
+	database "github.com/jadevelopmentgrp/Tickets-Database"
+	"github.com/jadevelopmentgrp/Tickets-Utilities/observability"
 	"github.com/rxdn/gdl/cache"
 	"go.uber.org/zap"
-	"time"
 )
 
 func main() {
 	conf := config.ParseConfig()
-
-	if err := sentry.Initialise(sentry.Options{
-		Dsn:   conf.SentryDSN,
-		Debug: !conf.ProductionMode,
-	}); err != nil {
-		fmt.Printf("Failed to initialise sentry: %v", err)
-	}
-
-	defer func() {
-		err := recover()
-		if err != nil {
-			sentry_go.CurrentHub().Recover(err)
-			sentry_go.Flush(time.Second * 3)
-		}
-	}()
 
 	var logger *zap.Logger
 	var err error
@@ -41,7 +24,7 @@ func main() {
 		logger, err = zap.NewProduction(
 			zap.AddCaller(),
 			zap.AddStacktrace(zap.ErrorLevel),
-			zap.WrapCore(observability.ZapSentryAdapter(observability.EnvironmentProduction)),
+			zap.WrapCore(observability.ZapAdapter()),
 		)
 	} else {
 		logger, err = zap.NewDevelopment(zap.
@@ -56,10 +39,6 @@ func main() {
 	dbClient := newDatabaseClient(conf)
 	logger.Debug("Connected to database, connecting to redis...")
 	redisClient := newRedisClient(conf)
-	logger.Debug("Connected to redis, connecting to cache...")
-	cacheClient := newCacheClient(conf)
-	logger.Debug("Connected to cache, building premium client...")
-	premiumClient := newPremiumClient(redisClient, cacheClient, dbClient)
 
 	logger.Debug("Starting daemon", zap.Int("sweep_time_minutes", conf.DaemonSweepTime))
 	daemon.NewDaemon(
@@ -67,7 +46,6 @@ func main() {
 		logger,
 		dbClient,
 		redisClient,
-		premiumClient,
 		time.Minute*time.Duration(conf.DaemonSweepTime),
 	).Start()
 }
@@ -123,8 +101,4 @@ func newRedisClient(conf config.Config) (client *redis.Client) {
 	}
 
 	return
-}
-
-func newPremiumClient(redisClient *redis.Client, cacheClient *cache.PgCache, databaseClient *database.Database) *premium.PremiumLookupClient {
-	return premium.NewPremiumLookupClient(redisClient, cacheClient, databaseClient)
 }

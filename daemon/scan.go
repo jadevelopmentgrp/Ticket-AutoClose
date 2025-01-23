@@ -2,7 +2,8 @@ package daemon
 
 import (
 	"context"
-	"github.com/TicketsBot/common/autoclose"
+
+	"github.com/jadevelopmentgrp/Tickets-Utilities/autoclose"
 )
 
 func (d *Daemon) scan() (tickets []autoclose.Ticket, err error) {

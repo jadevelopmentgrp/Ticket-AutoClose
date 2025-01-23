@@ -4,8 +4,8 @@ ARG branch
 
 RUN apk update && apk upgrade && apk add git zlib-dev gcc musl-dev
 
-COPY . /go/src/github.com/TicketsBot/autoclosedaemon
-WORKDIR /go/src/github.com/TicketsBot/autoclosedaemon
+COPY . /go/src/daemon
+WORKDIR /go/src/daemon
 
 RUN set -Eeux && \
     go mod download && \
@@ -21,7 +21,7 @@ FROM alpine:latest
 
 RUN apk update && apk upgrade
 
-COPY --from=builder /go/src/github.com/TicketsBot/autoclosedaemon/main /srv/daemon/main
+COPY --from=builder /go/src/daemon/main /srv/daemon/main
 RUN chmod +x /srv/daemon/main
 
 RUN adduser container --disabled-password --no-create-home

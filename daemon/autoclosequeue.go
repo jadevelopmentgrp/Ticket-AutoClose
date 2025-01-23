@@ -1,9 +1,10 @@
 package daemon
 
 import (
-	"github.com/TicketsBot/common/autoclose"
-	"go.uber.org/zap"
 	"time"
+
+	"github.com/jadevelopmentgrp/Tickets-Utilities/autoclose"
+	"go.uber.org/zap"
 )
 
 func NewAutoCloseQueue(daemon *Daemon, ratelimit time.Duration) *Queue[autoclose.Ticket] {

@@ -2,13 +2,13 @@ package daemon
 
 import (
 	"context"
-	"github.com/TicketsBot/autoclosedaemon/config"
-	"github.com/TicketsBot/common/autoclose"
-	"github.com/TicketsBot/common/premium"
-	"github.com/TicketsBot/database"
-	"github.com/go-redis/redis/v8"
-	"go.uber.org/zap"
 	"time"
+
+	"github.com/go-redis/redis/v8"
+	"github.com/jadevelopmentgrp/Tickets-AutoClose/config"
+	database "github.com/jadevelopmentgrp/Tickets-Database"
+	"github.com/jadevelopmentgrp/Tickets-Utilities/autoclose"
+	"go.uber.org/zap"
 )
 
 type Daemon struct {
@@ -16,7 +16,6 @@ type Daemon struct {
 	logger            *zap.Logger
 	db                *database.Database
 	redis             *redis.Client
-	premiumClient     *premium.PremiumLookupClient
 	AutoCloseQueue    *Queue[autoclose.Ticket]
 	CloseRequestQueue *Queue[database.CloseRequest]
 
@@ -28,16 +27,14 @@ func NewDaemon(
 	logger *zap.Logger,
 	db *database.Database,
 	redis *redis.Client,
-	premiumClient *premium.PremiumLookupClient,
 	sweepTime time.Duration,
 ) *Daemon {
 	daemon := &Daemon{
-		conf:          conf,
-		logger:        logger,
-		db:            db,
-		redis:         redis,
-		premiumClient: premiumClient,
-		sweepTime:     sweepTime,
+		conf:      conf,
+		logger:    logger,
+		db:        db,
+		redis:     redis,
+		sweepTime: sweepTime,
 	}
 
 	daemon.AutoCloseQueue = NewAutoCloseQueue(daemon, time.Second*1)

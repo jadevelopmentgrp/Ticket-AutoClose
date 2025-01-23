@@ -1,10 +1,11 @@
 package daemon
 
 import (
-	"github.com/TicketsBot/common/closerequest"
-	"github.com/TicketsBot/database"
-	"go.uber.org/zap"
 	"time"
+
+	database "github.com/jadevelopmentgrp/Tickets-Database"
+	"github.com/jadevelopmentgrp/Tickets-Utilities/closerequest"
+	"go.uber.org/zap"
 )
 
 func NewCloseRequestQueue(daemon *Daemon, ratelimit time.Duration) *Queue[database.CloseRequest] {
